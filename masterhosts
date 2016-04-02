@@ -1,0 +1,6 @@
+[hadoop_namenode]
+159.203.84.172 ansible_ssh_user=hduser
+
+[hadoop_datanode]
+159.203.92.134 ansible_ssh_user=hduser
+

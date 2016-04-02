@@ -1,0 +1,28 @@
+[hadoop_namenode]
+159.203.103.40 ansible_ssh_user=root
+
+[hadoop_datanode]
+104.236.104.141 ansible_ssh_user=root
+104.236.105.138 ansible_ssh_user=root
+
+[hbase_masterserver]
+159.203.103.40 ansible_ssh_user=root
+
+[hbase_backupmaster]
+104.236.104.141 ansible_ssh_user=root
+
+
+[hbase_regionserver]
+104.236.104.141 ansible_ssh_user=root
+104.236.105.138 ansible_ssh_user=root
+
+
+[hbase_zookeeper_quorum]
+159.203.103.40 ansible_ssh_user=root
+104.236.104.141 ansible_ssh_user=root
+104.236.105.138 ansible_ssh_user=root
+
+
+
+
+

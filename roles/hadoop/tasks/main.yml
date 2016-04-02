@@ -1,0 +1,118 @@
+- name: "Download Hadoop"
+  shell:  wget {{HADOOP_DOWNLOAD_URL}}
+  sudo: yes
+  tags:
+    - setup
+
+- name: Extract Hadoop Archive
+  shell: tar -xvf {{HADOOP_PKG}} -C /usr/local
+  sudo: yes
+  tags:
+    - setup
+
+- name: Create hadoop symlink for easier update
+  file: "state=link src=/usr/local/{{HADOOP_PKG_NAME}} dest=/usr/local/hadoop"
+  sudo: yes
+  tags:
+    - hadoop
+
+- name: Owner ship of /usr/local
+  file: "state=directory path=/usr/local owner=hduser group=hadoop recurse=yes"
+  sudo: yes
+  tags:
+    - hadoop
+
+
+- name: remove Environment variables
+  lineinfile: "state=absent dest=/home/hduser/.profile line='export JAVA_HOME=$(readlink -f /usr/bin/java | sed 's:bin/java::'); export HADOOP_INSTALL=/usr/local/hadoop; export HADOOP_HOME=$HADOOP_INSTALL; export PATH=$PATH:$HADOOP_INSTALL/bin; export PATH=$PATH:$HADOOP_INSTALL/sbin; export HADOOP_MAPRED_HOME=$HADOOP_INSTALL; export HADOOP_COMMON_HOME=$HADOOP_INSTALL; export HADOOP_HDFS_HOME=$HADOOP_INSTALL; export HADOOP_CONF_DIR=${HADOOP_HOME}'/etc/hadoop'; export YARN_HOME=$HADOOP_INSTALL;' "
+  sudo: yes
+  tags:
+    - hadoop
+
+- name: add Environment variables
+  lineinfile: "dest=/home/hduser/.profile line='export JAVA_HOME=$(readlink -f /usr/bin/java | sed 's:bin/java::'); export HADOOP_INSTALL=/usr/local/hadoop; export HADOOP_HOME=$HADOOP_INSTALL; export PATH=$PATH:$HADOOP_INSTALL/bin; export PATH=$PATH:$HADOOP_INSTALL/sbin; export HADOOP_MAPRED_HOME=$HADOOP_INSTALL; export HADOOP_COMMON_HOME=$HADOOP_INSTALL; export HADOOP_HDFS_HOME=$HADOOP_INSTALL; export HADOOP_CONF_DIR=${HADOOP_HOME}'/etc/hadoop'; export YARN_HOME=$HADOOP_INSTALL;' "
+  sudo: yes
+  tags:
+    - hadoop
+
+- name: Reload .profile
+  shell: source /home/hduser/.profile
+  args:
+     executable: /bin/bash
+  sudo: yes
+  tags:
+    - source
+    - hadoop
+
+
+- name : remove java home in hadoop  env sh
+  lineinfile: "state=absent dest=/usr/local/hadoop/etc/hadoop/hadoop-env.sh line='export JAVA_HOME=$(readlink -f /usr/bin/java | sed 's:bin/java::' );'"
+  sudo: yes
+  tags:
+    - hadoop
+
+- name : add java home in hadoop  env sh
+  lineinfile: "dest=/usr/local/hadoop/etc/hadoop/hadoop-env.sh line='export JAVA_HOME=$(readlink -f /usr/bin/java | sed 's:bin/java::' );'"
+  sudo: yes
+  tags:
+    - hadoop
+
+
+- name: Creates namenode directory
+  file: path=/usr/local/hadoop/data/namenode state=directory owner=hduser group=hadoop mode=0775 recurse=yes
+  delegate_to : "{{MASTER_NODE}}"
+  sudo: yes
+  tags:
+    - hadoop
+
+- name: Creates datenode directory
+  file: path=/usr/local/hadoop/data/datanode state=directory owner=hduser group=hadoop mode=0775 recurse=yes
+  sudo: yes
+  tags:
+    - hadoop
+
+- name: Creates logs directory
+  file: path=/usr/local/hadoop/logs state=directory owner=hduser group=hadoop mode=0775 recurse=yes
+  sudo: yes
+  tags:
+    - hadoop
+
+- name: Copy hdfs-site.xml file
+  template: src=hdfs-site.xml dest=/usr/local/hadoop/etc/hadoop owner=hduser group=hadoop
+  sudo: yes
+  tags:
+    - hadoop
+
+- name: Copy core-site.xml file
+  template: src=core-site.xml dest=/usr/local/hadoop/etc/hadoop owner=hduser group=hadoop
+  sudo: yes
+  tags:
+    - hadoop
+
+- name: Copy slaves file
+  template: src=slaves dest=/usr/local/hadoop/etc/hadoop owner=hduser group=hadoop
+  sudo: yes
+  tags:
+    - hadoop
+
+- name: Copy yarn-site.xml file
+  template: src=yarn-site.xml dest=/usr/local/hadoop/etc/hadoop owner=hduser group=hadoop
+  sudo: yes
+  tags:
+    - hadoop
+
+- name: Format namenode
+  raw: hdfs namenode -format
+  sudo: yes
+  sudo_user: hduser
+  tags:
+    - hadoopxx
+
+- name: start hadoop dfs
+  shell: /usr/local/hadoop/sbin/start-dfs.sh
+  remote_user: hduser
+  sudo: yes
+  delegate_to : "{{MASTER_NODE}}"
+  tags:
+    - starthadoop
+

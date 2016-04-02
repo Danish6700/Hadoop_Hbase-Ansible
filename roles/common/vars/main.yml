@@ -1,0 +1,12 @@
+#vars/main.yml
+
+system_packages:
+  - maven
+  - build-essential
+  - zlib1g-dev
+  - cmake
+  - pkg-config
+  - git
+  - python-dev
+  - libssl-dev
+  - protobuf-compiler

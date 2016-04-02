@@ -1,0 +1,69 @@
+- name: "Download Hbase"
+  shell:  wget {{HBASE_DOWNLOAD_URL}}
+  sudo: yes
+  tags:
+    - setup
+
+
+- name: Extract Hbase Archive
+  shell: tar -xvf {{HBASE_PKG}} -C /usr/local
+  sudo: yes
+  tags:
+    - setup
+   
+
+- name: Create hbase symlink for easier update
+  file: "state=link src=/usr/local/{{HBASE_PKG_NAME}} dest=/usr/local/hbase"
+  sudo: yes
+  tags:
+    - hbase
+
+- name: Owner ship of /usr/local
+  file: "state=directory path=/usr/local owner=hduser group=hadoop recurse=yes"
+  sudo: yes
+  tags:
+    - hbase
+
+
+- name: Copy hbase-site.xml file
+  template: src=hbase-site.xml dest=/usr/local/hbase/conf owner=hduser group=hadoop
+  sudo: yes
+  tags:
+    - hbase
+
+- name: Copy regionservers file
+  template: src=regionservers dest=/usr/local/hbase/conf owner=hduser group=hadoop
+  sudo: yes
+  tags:
+    - hbase
+
+- name: Copy backup-masters file
+  template: src=backup-masters dest=/usr/local/hbase/conf owner=hduser group=hadoop
+  sudo: yes
+  tags:
+    - hbase
+
+
+- name: remove bashrc variables
+  lineinfile: "state=absent dest=/home/hduser/.bashrc line='export CLASSPATH=$CLASSPATH:/usr/local/hbase/lib/*;'"
+  sudo: yes
+  tags:
+    - hbase
+
+- name: add bashrc variables
+  lineinfile: "dest=/home/hduser/.bashrc line='export CLASSPATH=$CLASSPATH:/usr/local/hbase/lib/*;' "
+  sudo: yes
+  tags:
+    - hbase
+
+- name: remove hbase-env.sh variables
+  lineinfile: "state=absent dest=/usr/local/hbase/conf/hbase-env.sh line='export JAVA_HOME=$(readlink -f /usr/bin/java | sed 's:bin/java::'); export HBASE_CLASSPATH=/usr/local/hbase/lib/*; export HBASE_MANAGES_ZK=true;' "
+  sudo: yes
+  tags:
+    - hbase
+
+- name: add hbase-env.sh variables
+  lineinfile: "dest=/usr/local/hbase/conf/hbase-env.sh line='export JAVA_HOME=$(readlink -f /usr/bin/java | sed 's:bin/java::'); export HBASE_CLASSPATH=/usr/local/hbase/lib/*; export HBASE_MANAGES_ZK=true;' "
+  sudo: yes
+  tags:
+    - hbase

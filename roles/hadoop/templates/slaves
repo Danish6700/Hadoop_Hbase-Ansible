@@ -1,0 +1,5 @@
+{% for slave in groups.hadoop_datanode %}
+
+{{slave}}
+
+{% endfor %}

@@ -1,0 +1,119 @@
+- name: update apt-get
+  apt: update_cache=yes
+  sudo: yes
+  tags:
+    - setup
+
+- name: upgrade ubuntu server
+  apt: upgrade=yes
+  sudo: yes
+  notify: restart system
+  tags:
+    - setup
+
+- name: Set timezone variables
+  sudo: yes
+  copy: content='Asia/Kolkata'
+        dest=/etc/timezone
+        owner=root
+        group=root
+        mode=0644
+  notify:
+    - update timezone
+  tags:
+    - setup
+
+- name: Install required system packages.
+  apt: pkg={{ item }} state=installed update-cache=yes
+  with_items: system_packages
+  sudo: yes
+  tags:
+    - setup
+
+- name: add webupd8 ppa
+  apt_repository: repo='ppa:webupd8team/java'
+  sudo: yes
+  tags:
+    - setup
+
+- name: update
+  shell: apt-get update
+  sudo: yes
+  tags:
+    - setup
+
+- name: auto accept oracle jdk license
+  shell: echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections
+  sudo: yes
+  tags:
+    - setup
+
+- name: install java8
+  shell: apt-get install -y oracle-java8-installer ca-certificates
+  sudo: yes
+  tags:
+    - setup
+
+- name : adding hadoop group
+  group: name=hadoop state=present
+  sudo: yes
+  tags:
+    - setup
+
+- name : adding hduser
+  sudo : yes
+  user: name=hduser
+        group=hadoop
+        shell=/bin/bash
+        password=hdyhb5liQFmks
+        groups=sudo,hadoop
+        append=yes
+        generate_ssh_key=yes
+        ssh_key_bits=2048
+        ssh_key_file=.ssh/id_rsa
+  tags:
+    - setup
+
+- name : copy public key in authorized keys
+  shell: cat /home/hduser/.ssh/id_rsa.pub >> /home/hduser/.ssh/authorized_keys
+  sudo: yes
+  tags:
+    - setup
+
+
+
+- name: copy from name node in pki_certs
+  slurp: src={{item}}
+  with_items:
+    - /home/hduser/.ssh/id_rsa.pub
+    - /home/hduser/.ssh/id_rsa
+    - /home/hduser/.ssh/authorized_keys
+  register : pki_certs
+  sudo: yes
+  run_once : true
+  delegate_to : "{{MASTER_NODE}}"
+  tags:
+    - setup
+    - copyit
+
+- name: write out pki_certs on all
+  copy:
+    dest: "{{ item.item }}"
+    content: "{{ item.content | b64decode }}"
+    owner: hduser
+    group: hadoop
+    mode: 0700
+  with_items: pki_certs.results
+  sudo: yes
+  tags:
+    - setup
+    - copyit
+
+- name: Copy hosts file with nodes
+  template: src=hosts.j2 dest=/etc/hosts
+  sudo: yes
+  tags:
+    - setup
+    - hostit
+
+
